@@ -10,6 +10,38 @@ ADD_SUBDIRECTORY(source)
 
 SET(SRC ${PROJECT_SOURCE_DIR}/test_mh.c)
 ADD_EXECUTABLE(${PROJECT_BINARY_DIR}/test_mh ${SRC})
-TARGET_LINK_LIBRARIES(${PROJECT_BINARY_DIR}/test_mh png tiff jpeg ${LIBS})
+
+
+FIND_PACKAGE(TIFF)
+IF(TIFF_FOUND)
+  include_directories(${TIFF_INCLUDE_DIR})
+  #  link_directories(${TIFF_LIBRARY})
+  SET( LIBS ${LIBS} ${TIFF_LIBRARIES})
+ENDIF()
+
+FIND_PACKAGE(JPEG)
+if(JPEG_FOUND)
+  include_directories(${JPEG_INCLUDE_DIR})
+  # link_directories(${JPEG_LIBRARY})
+  SET( LIBS ${LIBS} ${JPEG_LIBRARIES})
+ENDIF()
+
+FIND_PACKAGE(PNG)
+IF(PNG_FOUND)
+  include_directories(${PNG_INCLUDE_DIR})
+  #  link_directories(${PNG_LIBRARY})
+  SET( LIBS ${LIBS} ${PNG_LIBRARIES})
+ENDIF()
+
+FIND_PACKAGE(PNG)
+IF(PNG_FOUND)
+  include_directories(${PNG_INCLUDE_DIR})
+  # link_directories(${PNG_LIBRARY})
+  SET( LIBS ${LIBS} ${PNG_LIBRARIES})
+ENDIF()
+
+MESSAGE("libraries: ${LIBS}")
+
+TARGET_LINK_LIBRARIES(${PROJECT_BINARY_DIR}/test_mh ${LIBS})
 
 INSTALL(TARGETS ${PROJECT_BINARY_DIR}/test_mh RUNTIME DESTINATION bin)
