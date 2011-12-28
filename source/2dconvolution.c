@@ -94,13 +94,18 @@ double *conv2d(double *input, int w, int h, double *kernel, int n){
 		fila += dif_fila_col;
 		col += dif_fila_col;
 		pos = wx*fila + col;
-		double *neighborhood = get_neighborhood(aux, pos, n, offsets);
+		//double *neighborhood = get_neighborhood(aux, pos, n, offsets);
+	
+		// modificacion 1: hacer la funcion get_neighborhood in line en el bucle.
+		// cambio adentro del for: en vez de pedir neighborhood[j] pido im[pos + offset[j]]
+	
 		acum = 0;
 		for (j=0;j<jmax;j++){
-			acum += neighborhood[j]*kernel[j];
+			//acum += neighborhood[j]*kernel[j];
+			acum += aux[pos+offsets[j]]*kernel[j];
 		}
 		out[i] = acum;
-		free_neighborhood(neighborhood);
+		//free_neighborhood(neighborhood);
 	}
 	
 	free(aux);
