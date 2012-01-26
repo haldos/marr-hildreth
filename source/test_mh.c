@@ -1,3 +1,5 @@
+// Copyright (C) 2011-2012, Haldo Spontón <haldos@fing.edu.uy>
+// Copyright (C) 2011-2012, Juan Cardelino <juanc@fing.edu.uy>
 
 //		+-----------------------------------+
 //		| Marr-Hildreth Edge Detector       |
@@ -10,7 +12,8 @@
 #include "2dconvolution.c"
 #include <time.h>
 
-#define SAVE_KERNEL true
+// Values for saving debug images.
+#define SAVE_KERNEL false
 #define SAVE_SMOOTHED_IMAGE false
 #define SAVE_LAPLACIAN_IMAGE false
 
@@ -24,8 +27,12 @@ int main(int argc, char *argv[]) {
 	
 		// Parameters
 		float sigma = atof(argv[2]);
+			// <sigma> is the standard deviation of the gaussian function used to
+			// create the kernel.
 		int n = atoi(argv[3]);
+			// <n> is the size of the kernel (n*n).
 		float tzc = atof(argv[4]);
+			// <tzc> is the threshold of the zero-crossing method.
 	
 		// Load input image (using iio)
 		int w, h, pixeldim;
@@ -38,16 +45,21 @@ int main(int argc, char *argv[]) {
 			fprintf(stderr, "Out of memory...\n");
 			exit(EXIT_FAILURE);
 		}
+			// allocate memory for the grayscale image <im>, output of the grayscale conversion
+			// and correct allocation check.
 		int z;
-		int zmax = w*h;
-		if (pixeldim==3){
-			for(z=0;z<zmax;z++){
+			// <z> is just an integer used as array index.
+		int zmax = w*h;		// number of elements of <im>
+		if (pixeldim==3){	// if the image is color (RGB, three channels)...
+			for(z=0;z<zmax;z++){		// for each pixel in the image <im>, calculate the gray 
+										// value according to the expression: 
+										// I = ( 6968*R + 23434*G + 2366*B ) / 32768.
 				im[z] =  (double)(6968*im_orig[3*z] + 23434*im_orig[3*z + 1] + 2366*im_orig[3*z + 2])/32768;
 			}
 			fprintf(stderr, "images converted to grayscale\n");
-		} else {
+		} else {		// the image was originally grayscale...
 			for(z=0;z<zmax;z++){
-				im[z] = (double)im_orig[z];
+				im[z] = (double)im_orig[z];		// only assign the value of im_orig to im, casting to double.
 			}
 			fprintf(stderr, "images are already in grayscale\n");
 		}

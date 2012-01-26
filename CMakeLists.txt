@@ -1,3 +1,6 @@
+# Copyright (C) 2011-2012, Haldo Spontón <haldos@fing.edu.uy>
+# Copyright (C) 2011-2012, Juan Cardelino <juanc@fing.edu.uy>
+
 PROJECT(test_marr_hildreth)
 
 CMAKE_MINIMUM_REQUIRED(VERSION 2.6)

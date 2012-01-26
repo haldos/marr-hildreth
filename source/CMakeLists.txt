@@ -1,3 +1,6 @@
+# Copyright (C) 2011-2012, Haldo Spontón <haldos@fing.edu.uy>
+# Copyright (C) 2011-2012, Juan Cardelino <juanc@fing.edu.uy>
+
 MESSAGE("libs inside: ${LIBS}")
 SET(E_LIBS iio gaussian_kernel 2dconvolution)
 ADD_LIBRARY(iio iio.c iio.h)
