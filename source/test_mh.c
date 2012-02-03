@@ -3,8 +3,8 @@
 
 //		+-----------------------------------+
 //		| Marr-Hildreth Edge Detector       |
-//		| Implemented by Haldo Spontón		|
-//		| Last modified: 25/dic/2011		|
+//		| Implemented by Haldo Spontón      |
+//		| Last modified: 03/feb/2012        |
 //		+-----------------------------------+
 
 #include "iio.c"
@@ -13,9 +13,9 @@
 #include <time.h>
 
 // Values for saving debug images.
-#define SAVE_KERNEL false
-#define SAVE_SMOOTHED_IMAGE false
-#define SAVE_LAPLACIAN_IMAGE false
+#define SAVE_KERNEL true
+#define SAVE_SMOOTHED_IMAGE true
+#define SAVE_LAPLACIAN_IMAGE true
 
 int main(int argc, char *argv[]) {
 	if (argc != 6) {
@@ -65,12 +65,10 @@ int main(int argc, char *argv[]) {
 		}
 
 		// Generate gaussian kernel
-		// double *kernel = gaussian_kernel(n,sigma);
-		// modificacion 2: cambio el kernel gaussiano por el LoG kernel.
-		// con esto aplico el kernel gaussiano y el laplaciano en una sola convolucion.
-		double *kernel = LoG_kernel(n,sigma);
+		// see gaussian_kernel.c
+		double *kernel = gaussian_kernel(n,sigma);
 
-		// Debug: save kernel to image
+		// Debug: save kernel to image (this is not part of the algorithm itself)
 		if (SAVE_KERNEL){
 			float *kernel_float = malloc(n*n*sizeof(float));
 			if (kernel_float == NULL){
@@ -86,11 +84,15 @@ int main(int argc, char *argv[]) {
 			free(kernel_float);
 			fprintf(stderr, "kernel saved to kernel.png\n");
 		}
+		// end of save kernel image
 		
 		// Smooth input image with gaussian kernel
+		// see 2dconvolution.c
+		// <im_smoothed> is calculated convolving the grayscale image <im> with
+		// the gaussian kernel previously generated.
 		double *im_smoothed = conv2d(im, w, h, kernel, n);
 
-		// Debug: save smoothed image
+		// Debug: save smoothed image (this is not part of the algorithm itself)
 		if (SAVE_SMOOTHED_IMAGE){
 			float *smoothed = malloc((w+n-1)*(h+n-1)*sizeof(float));
 			if (smoothed == NULL){
@@ -111,66 +113,69 @@ int main(int argc, char *argv[]) {
 			free(smoothed);
 			fprintf(stderr, "smoothed image saved to smoothed.png\n");
 		}
+		// end of save smoothed image
 
 		// Laplacian of the smoothed image
-		// double operator[9] = {1, 1, 1, 1, -8, 1, 1, 1, 1};
-		// double *laplacian = conv2d(im_smoothed, w+n-1, h+n-1, operator, 3);
-		// Max absolute value of laplacian
-		// double max_l = 0;
-		// int p;
-		// int pmax = (w+n+1)*(h+n+1);
-		// for (p=0;p<pmax;p++){
-		// 	if (abs(laplacian[p])>max_l){
-		// 		max_l = abs(laplacian[p]);
-		// 	}
-		// }
+		double operator[9] = {1, 1, 1, 1, -8, 1, 1, 1, 1};
+			// an approximation of the laplacian operator:
+			//		/ 1  1  1 \
+			//	   |  1 -8  1  |
+			//		\ 1  1  1 /
+			// now we convolve the smoothed image with this operator,
+			// generating the <laplacian> image.
+		double *laplacian = conv2d(im_smoothed, w+n-1, h+n-1, operator, 3);
+		
+		// calculate max absolute value of laplacian:
+		// required for thresholding in zero-crossing (next)
 		double max_l = 0;
 		int p;
-		int pmax = (w+n-1)*(h+n-1);
+		int pmax = (w+n+1)*(h+n+1);
 		for (p=0;p<pmax;p++){
-			if (abs(im_smoothed[p])>max_l){
-				max_l = abs(im_smoothed[p]);
+			if (abs(laplacian[p])>max_l){
+				max_l = abs(laplacian[p]);
 			}
 		}
 
-//		// Debug: save laplacian image
-//		if (SAVE_LAPLACIAN_IMAGE){
-//			float *lapl = malloc((w+n+1)*(h+n+1)*sizeof(float));
-//			if (lapl == NULL){
-//				fprintf(stderr, "Out of memory...\n");
-//				exit(EXIT_FAILURE);
-//			}
-//			int i,j, fila, col;
-//			int imax = w*h;
-//			int dif_fila_col = (n+1)/2;
-//			for (i=0;i<imax;i++){
-//				fila = (int)(i/w);
-//				col = i - w*fila + dif_fila_col;
-//				fila += dif_fila_col;
-//				j = col + (w+n+1)*fila;
-//				lapl[i] = (float)laplacian[j];
-//			}
-//			iio_save_image_float_vec("laplacian.png", lapl, w, h, 1);
-//			free(lapl);
-//			fprintf(stderr, "laplacian image saved to laplacian.png\n");
-//		}
+		// Debug: save laplacian image (this is not part of the algorithm itself)
+		if (SAVE_LAPLACIAN_IMAGE){
+			float *lapl = malloc((w+n+1)*(h+n+1)*sizeof(float));
+			if (lapl == NULL){
+				fprintf(stderr, "Out of memory...\n");
+				exit(EXIT_FAILURE);
+			}
+			int i,j, fila, col;
+			int imax = w*h;
+			int dif_fila_col = (n+1)/2;
+			for (i=0;i<imax;i++){
+				fila = (int)(i/w);
+				col = i - w*fila + dif_fila_col;
+				fila += dif_fila_col;
+				j = col + (w+n+1)*fila;
+				lapl[i] = (float)laplacian[j];
+			}
+			iio_save_image_float_vec("laplacian.png", lapl, w, h, 1);
+			free(lapl);
+			fprintf(stderr, "laplacian image saved to laplacian.png\n");
+		}
+		// end of save laplacian image
 
 		// Zero-crossing
-		float *zero_cross = calloc(w*h,sizeof(float));
+		float *zero_cross = calloc(w*h,sizeof(float));		// this image will only content values 0 and 255
+															// but we use float for saving with iio.
 		if (zero_cross == NULL){
 			fprintf(stderr, "Out of memory...\n");
 			exit(EXIT_FAILURE);
 		}
 		int ind_en_lapl, fila, col;
-		int *offsets = get_neighbors_offset(w+n-1, 3);
+		int *offsets = get_neighbors_offset(w+n+1, 3);
 		pmax = w*h;
-		int dif_fila_col = (n-1)/2;
+		int dif_fila_col = (n+1)/2;
 		for (p=0;p<pmax;p++){
 			fila = ((int)(p/w));
 			col = p-(w*fila) + dif_fila_col;
 			fila += dif_fila_col;
-			ind_en_lapl = col + (w+n-1)*fila;
-			double *n3 = get_neighborhood(im_smoothed, ind_en_lapl, 3, offsets);
+			ind_en_lapl = col + (w+n+1)*fila;
+			double *n3 = get_neighborhood(laplacian, ind_en_lapl, 3, offsets);
 			if ((n3[3]*n3[5]<0)&&(abs(n3[3]-n3[5])>(tzc*max_l))) {
 				// horizontal sign change
 				zero_cross[p] = 255;
@@ -197,7 +202,7 @@ int main(int argc, char *argv[]) {
 		free(im_orig);
 		free(im);
 		free(im_smoothed);
-//		free(laplacian);
+		free(laplacian);
 		free_gaussian_kernel(kernel);
 
 		fprintf(stderr, "marr-hildreth edge detector computation done.\n");
